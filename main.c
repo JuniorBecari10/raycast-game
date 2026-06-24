@@ -9,7 +9,7 @@
 #define SPEED 0.025
 #define ANGLE_SPEED 0.05
 #define MAP_SIZE 20
-#define COLOR_MAX 200
+#define COLOR_MAX 180
 
 struct player {
     double x, y;
@@ -24,7 +24,7 @@ struct player player = {
     .x = 1,
     .y = 1,
     .angle = 0,
-    .fov = PI / 3,
+    .fov = PI / 2,
 };
 
 int map[MAP_SIZE][MAP_SIZE] = {
@@ -57,11 +57,9 @@ struct ray castRay(double angle) {
     double dx = cos(angle);
     double dy = sin(angle);
 
-    for (int32_t i = 0; map[(int32_t) y][(int32_t) x] == 0;) {
+    while (map[(int32_t) y][(int32_t) x] == 0) {
         x += dx * 0.01;
         y += dy * 0.01;
-
-        i++;
     }
 
     double distance = sqrt(pow(x - player.x, 2) + pow(y - player.y, 2));
@@ -148,7 +146,7 @@ void environment(void) {
 }
 
 void render(void) {
-    environment();
+    // environment();
     raycast();
 }
 void clear(void) {
