@@ -16,8 +16,14 @@ struct player {
     double angle, fov;
 };
 
+enum side {
+    NORTH_SOUTH,
+    WEST_EAST,
+};
+
 struct ray {
     double distance, wallHeight;
+    enum side side;
 };
 
 struct player player = {
@@ -62,18 +68,29 @@ struct ray castRay(double angle) {
         y += dy * 0.01;
     }
 
+    double fracX = x - floor(x);
+    double fracY = y - floor(y);
+
+    enum side side;
+    if (fracX < fracY && fracX < (1. - fracY)) side = NORTH_SOUTH;
+    else if (fracY < fracX && fracY < (1. - fracX)) side = WEST_EAST;
+    else side = NORTH_SOUTH;
+
     double distance = sqrt(pow(x - player.x, 2) + pow(y - player.y, 2));
     double wallHeight = (HEIGHT / 2.) / distance;
 
     return (struct ray) {
         .distance = distance,
         .wallHeight = wallHeight,
+        .side = side,
     };
 }
 
 void drawWallSlice(int32_t i, struct ray ray) {
     const int32_t sliceWidth = WIDTH / RAYS;
     int32_t color = (int32_t) (180 / ray.distance);
+
+    if (ray.side == WEST_EAST) color -= 20;
     
     if (color < 0) color = 0;
     if (color > COLOR_MAX) color = COLOR_MAX;
