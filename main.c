@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define WIDTH 950
 #define HEIGHT 600
@@ -16,14 +18,9 @@ struct player {
     double angle, fov;
 };
 
-enum side {
-    NORTH_SOUTH,
-    WEST_EAST,
-};
-
 struct ray {
     double distance, wallHeight;
-    enum side side;
+    uint8_t type;
 };
 
 struct player player = {
@@ -36,25 +33,39 @@ struct player player = {
 int map[MAP_SIZE][MAP_SIZE] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
-    {1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1},
+    {1, 0, 2, 2, 0, 0, 0, 3, 3, 0, 0, 4, 4, 0, 0, 0, 1, 1, 0, 1},
+    {1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
+    {1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 1, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 2, 0, 1},
+    {1, 0, 1, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 2, 0, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1},
-    {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
-    {1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1},
+    {1, 0, 3, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 1, 0, 1},
+    {1, 0, 3, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 1, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 1},
+    {1, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1},
+    {1, 0, 4, 4, 0, 0, 0, 2, 2, 0, 0, 3, 3, 0, 0, 0, 1, 1, 0, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
+
+Color getColor(uint8_t type, uint8_t shade) {
+    // 0 is empty space, so it doesn't enter here
+    switch (type) {
+        case 1: return (Color) { shade, shade, shade, 255 };
+        case 2: return (Color) { shade, 0, shade, 255 };
+        case 3: return (Color) { 0, shade, shade, 255 };
+        case 4: return (Color) { shade, shade, 0, 255 };
+
+        default:
+            fprintf(stderr, "Invalid color type: %d", type);
+            exit(EXIT_FAILURE);
+    }
+}
 
 struct ray castRay(double angle) {
     double x = player.x;
@@ -66,48 +77,43 @@ struct ray castRay(double angle) {
     while (map[(int32_t) y][(int32_t) x] == 0) {
         x += dx * 0.01;
         y += dy * 0.01;
+
+        if (x < 0 || x >= MAP_SIZE || y < 0 || y >= MAP_SIZE)
+            break;
     }
-
-    double fracX = x - floor(x);
-    double fracY = y - floor(y);
-
-    enum side side;
-    if (fracX < fracY && fracX < (1. - fracY)) side = NORTH_SOUTH;
-    else if (fracY < fracX && fracY < (1. - fracX)) side = WEST_EAST;
-    else side = NORTH_SOUTH;
 
     double distance = sqrt(pow(x - player.x, 2) + pow(y - player.y, 2));
     double wallHeight = (HEIGHT / 2.) / distance;
 
+    if (wallHeight > HEIGHT)
+        wallHeight = HEIGHT;
+
     return (struct ray) {
         .distance = distance,
         .wallHeight = wallHeight,
-        .side = side,
+        .type = map[(int32_t) y][(int32_t) x],
     };
 }
 
 void drawWallSlice(int32_t i, struct ray ray) {
     const int32_t sliceWidth = WIDTH / RAYS;
-    int32_t color = (int32_t) (180 / ray.distance);
-
-    if (ray.side == WEST_EAST) color -= 20;
+    int32_t shade = (int32_t) (180 / ray.distance) * 2;
     
-    if (color < 0) color = 0;
-    if (color > COLOR_MAX) color = COLOR_MAX;
+    // this ensures it fits in a uint8_t. casting is safe
+    if (shade < 0) shade = 0;
+    if (shade > COLOR_MAX) shade = COLOR_MAX;
     
-    DrawRectangle(i * sliceWidth, floor(HEIGHT / 2. - ray.wallHeight / 2), sliceWidth, ray.wallHeight, (Color) { color, color, color, 255 });
+    int32_t height = ray.wallHeight * ray.type;
+    DrawRectangle(i * sliceWidth, floor(HEIGHT / 2. - ray.wallHeight / 2.) - (height - ray.wallHeight), sliceWidth, height, getColor(ray.type, (uint8_t) shade));
 }
 
 void raycast(void) {
     const double angleStep = player.fov / RAYS;
     for (int32_t i = 0; i < RAYS; i++) {
-        const double angle = player.angle - (player.fov / 2) + i * angleStep;
-        struct ray ray = castRay(angle);
-
+        struct ray ray = castRay(player.angle - (player.fov / 2) + i * angleStep);
         drawWallSlice(i, ray);
     }
 }
-
 // ---
 
 bool isColliding(void) {
@@ -145,9 +151,13 @@ void input(void) {
 
     if (IsKeyDown(KEY_A))
         player.angle -= ANGLE_SPEED;
-
-    if (IsKeyDown(KEY_D))
+    else if (IsKeyDown(KEY_D))
         player.angle += ANGLE_SPEED;
+
+    if (player.angle < 0)
+        player.angle += 2 * PI;
+    else if (player.angle > 2 * PI)
+        player.angle -= 2 * PI;
 
     if (isColliding()) {
         player.x = oldX;
@@ -186,4 +196,3 @@ int main(void) {
     CloseWindow();
     return 0;
 }
-
